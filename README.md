@@ -4,9 +4,9 @@ Batch image sketcher is a programme written in python designed to explore every 
 
 ### Example
 Before:
-![Image before](https://github.com/joshgreaves/BatchImageSketcher/blob/master/images/Before3.jpg)
+![Image before](https://github.com/joshgreaves/BatchImageSketcher/blob/master/images/Before3.jpg?raw=true)
 After:
-![Image after](https://github.com/joshgreaves/BatchImageSketcher/blob/master/images/after3.jpg)
+![Image after](https://github.com/joshgreaves/BatchPhotoSketcher/blob/master/images/after3.png?raw=true)
 
 ### Prerequesites
 Python, OpenCV, numpy.
