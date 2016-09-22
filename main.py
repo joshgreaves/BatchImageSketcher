@@ -66,7 +66,9 @@ def recursive_sketchify(source_path, dest_path):
         if image_count % 1000 == 0:
             print "Image Count: " + str(image_count)
         img = sketchify(source_path + picture_files[0])
-        cv2.imwrite(dest_path + picture_files[0][:-4] + "png", img)
+	# Change the extension
+	pre, ext = os.path.splitext(picture_files[0])
+        cv2.imwrite(dest_path + pre + ".png", img)
         print "SAVING IMAGE! " + dest_path + picture_files[0]
         del picture_files[0]
     
