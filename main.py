@@ -1,9 +1,17 @@
 import cv2
+import time
 import numpy as np
 import argparse
 import os
+from tqdm import tqdm
+import Queue
+from threading import Thread
 
 image_count = 0
+MAX_THREADS = 12
+q = Queue.Queue()
+DESTINATION_PATH = ""
+SOURCE_PATH = ""
 
 # Will sketchify a single image
 def sketchify(img_path):
@@ -11,7 +19,6 @@ def sketchify(img_path):
     inv = 255 - img
     b_inv = cv2.GaussianBlur(inv, (15, 15), 0)
     return cv2.divide(img, 255-b_inv, scale=256)
-
 
 
 # Will sketchify every image in a directory, and traverse every directory from the current one down
@@ -25,6 +32,7 @@ def recursive_sketchify(source_path, dest_path):
     # Base case: There are no more files or directories
     if len(list_of_files_and_directories) == 0:
         return
+
     # To make things easier, ensure both paths end with /
     if not source_path.endswith('/'):
         source_path += '/'
@@ -61,20 +69,104 @@ def recursive_sketchify(source_path, dest_path):
     
     # Since there are no more directories here, let's grab the pictures!
     while (len(picture_files) > 0):
-        global image_count
-        image_count += 1
-        if image_count % 1000 == 0:
-            print "Image Count: " + str(image_count)
-        img = sketchify(source_path + picture_files[0])
-	# Change the extension
-	pre, ext = os.path.splitext(picture_files[0])
-        cv2.imwrite(dest_path + pre + ".png", img)
-        print "SAVING IMAGE! " + dest_path + picture_files[0]
+
+        # Get the image name without extension
+        pre, ext = os.path.splitext(picture_files[0])
+
+        # If the image already exists, don't sketch it!
+        if (not os.path.isfile(dest_path + pre + ".png")):
+
+            # Count another image processed
+            global image_count
+            image_count += 1
+
+            # Print status after every 1000 images
+            if image_count % 1000 == 0:
+                print "Image Count: " + str(image_count)
+            img = sketchify(source_path + picture_files[0])
+
+            # Change the extension and write file
+            cv2.imwrite(dest_path + pre + ".png", img)
+            print "SAVING IMAGE! " + dest_path + picture_files[0]
+
         del picture_files[0]
     
     return
 
+def sketchify_all_in_directory(path, files):
+    global DESTINATION_PATH
+    global SOURCE_PATH
+
+    # Gets every picture in the domain
+    for pic in (pic for pic in files if pic.lower().endswith(('.png', '.jpg', '.jpeg'))):
+
+        # Get the current relative path
+        rel_path = os.path.relpath(path, SOURCE_PATH)
+        #print "rel path: " + rel_path
+
+        # Get the image name without extension
+        pre, ext = os.path.splitext(pic)
+
+        # If the image already exists, don't sketch it!
+        if (not os.path.isfile(os.path.join(DESTINATION_PATH, rel_path, pre + ".png"))):
+
+            # Count another image processed
+            global image_count
+            image_count += 1
+
+            # Print status after every 1000 images
+            if image_count % 1000 == 0:
+                print "Image Count: " + str(image_count)
+
+            # Actually sketch the image    
+            img = sketchify(path + pic)
+
+            # Change the extension and write file
+            cv2.imwrite(os.path.join(DESTINATION_PATH, rel_path, pre + ".png"), img)
+            #print "SAVING IMAGE! " + os.path.join(DESTINATION_PATH, rel_path, pre + ".png")
+		    #print os.path.join(path, pic)
+
+def runner():
+    global q
+    time.sleep(3)
+    while not q.empty():
+        dir, files = q.get()
+        sketchify_all_in_directory(dir, files)
     
+    return
+
+
+
+def smarter_sketchify(source_path, dest_path):
+    global q
+
+    print "Finding all images..."
+
+    threads = []
+    # Start a thread for each 
+    for i in range(MAX_THREADS):
+        print "Starting thread " + str(i)
+        thread = Thread(target=runner)
+        threads.append(thread)
+    
+    for x in threads:
+        x.start()
+    
+    # Gets the paths, subfolders, and files in the whole source
+    for path, subFolders, files in tqdm(os.walk(source_path)):
+        q.put((path, files))
+    
+    while q.qsize() > 0:
+        print q.qsize() + " directories left to proces..."
+        time.sleep(1)
+
+    for x in threads:
+        x.join()
+        
+    
+
+    sketchify_all_in_directory(path, files)
+        
 
 
 #cv2.imshow(str(i), dodged)
@@ -107,4 +199,5 @@ if not os.path.isdir(DESTINATION_PATH):
     print "Exiting..."
     exit()
 
-recursive_sketchify(SOURCE_PATH, DESTINATION_PATH)
+#recursive_sketchify(SOURCE_PATH, DESTINATION_PATH)
+smarter_sketchify(SOURCE_PATH, DESTINATION_PATH)
