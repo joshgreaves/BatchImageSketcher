@@ -3,9 +3,7 @@
 Batch image sketcher is a programme written in python designed to explore every file in a directory, and if it is an image file create a "sketched" version of it.
 
 ### Example
-Before:
-![Image before](https://github.com/joshgreaves/BatchImageSketcher/blob/master/images/Before3.jpg?raw=true)
-After:
+![Image before](https://github.com/joshgreaves/BatchPhotoSketcher/blob/master/images/Before3.jpg?raw=true)
 ![Image after](https://github.com/joshgreaves/BatchPhotoSketcher/blob/master/images/after3.png?raw=true)
 
 ### Prerequesites
