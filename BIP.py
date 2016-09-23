@@ -33,18 +33,15 @@ class BatchImageProcessor():
         for i in range(self.NUM_THREADS):
             thread = Thread(target=self.sketch_worker)
             self.threads.append(thread)
-        
-        # Start all the threads
-        for t in self.threads:
-            t.start()
-        
+            thread.start()
+
         # Gets the paths, subfolders, and files in the whole source
         for path, subFolders, files in tqdm(os.walk(self.SOURCE)):
             self.q.put((path, files))
 
         # Print how many directories are left to process
         while (self.q.qsize() > 0):
-            print str(self.q.qsize()) + " directories left to proces..."
+            print str(self.q.qsize()) + " directories left to process..."
             time.sleep(1)
 
         print "left the loop..."
@@ -109,15 +106,19 @@ class BatchImageProcessor():
                 img = self.sketchify(os.path.join(dir, pic))
     
                 # Change the extension and write file
-                cv2.imwrite(os.path.join(self.DEST, rel_path, pre + ".png"), img)
+                if img is not None:
+                    cv2.imwrite(os.path.join(self.DEST, rel_path, pre + ".png"), img)
 
-                #print "SAVING IMAGE! " + os.path.join(DESTINATION_PATH, rel_path, pre + ".png")
-                #print os.path.join(path, pic)
+                    #print "SAVING IMAGE! " + os.path.join(DESTINATION_PATH, rel_path, pre + ".png")
 
 
     # Will sketchify a single image
     def sketchify(self, img_path):
         img = cv2.imread(img_path, 0)
-        inv = 255 - img
-        b_inv = cv2.GaussianBlur(inv, (15, 15), 0)
-        return cv2.divide(img, 255-b_inv, scale=256)
+        if img is not None:
+            inv = 255 - img
+            b_inv = cv2.GaussianBlur(inv, (15, 15), 0)
+            return cv2.divide(img, 255-b_inv, scale=256)
+        else
+            print "Couldn't open " + img_path ". Probably not an image!"
+            return None
