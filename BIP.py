@@ -119,6 +119,6 @@ class BatchImageProcessor():
             inv = 255 - img
             b_inv = cv2.GaussianBlur(inv, (15, 15), 0)
             return cv2.divide(img, 255-b_inv, scale=256)
-        else
-            print "Couldn't open " + img_path ". Probably not an image!"
+        else:
+            print "Couldn't open " + img_path + ". Probably not an image!"
             return None
